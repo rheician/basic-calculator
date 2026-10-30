@@ -23,9 +23,12 @@
 <!-- Calculator Body -->
 <div class="relative w-full max-w-[360px] bg-zinc-900 border-2 border-zinc-700 rounded-3xl p-5 shadow-[0_20px_50px_rgba(0,0,0,0.8)]">
 
+    <!-- Local Rickroll Video Overlay (Exact size of calculator) -->
+    <video id="rickroll-vid" src="/Voicy_rickroll.mp4" class="hidden absolute top-0 left-0 w-full h-full object-cover z-50 rounded-[1.3rem]" playsinline></video>
+
     <div class="flex justify-between items-center mb-3 px-1">
         <div>
-            <span class="text-zinc-100 font-bold tracking-widest text-sm block">CASYO</span>
+            <span class="text-zinc-100 font-bold tracking-widest text-sm block">CASIO</span>
             <span class="text-zinc-400 text-[10px] tracking-wider block font-semibold">ClassWiz fx-991CW</span>
         </div>
         <div class="w-16 h-6 bg-amber-950/80 border border-amber-800/60 rounded flex items-center justify-center shadow-inner">
@@ -37,7 +40,7 @@
     <div class="bg-zinc-800 p-3 rounded-xl border border-zinc-700 shadow-inner mb-4 relative z-10">
         <div class="flex justify-between items-center mb-1 text-[10px] text-emerald-600/80 font-mono">
             <span>MATH / DEG</span>
-            <button id="history-toggle" class="text-xs text-zinc-200 hover:text-white transition font-sans font-medium px-2 py-1 bg-zinc-700 hover:bg-zinc-600 rounded shadow">
+            <button id="history-toggle" class="text-xs text-zinc-200 hover:text-white transition font-sans font-medium px-2 py-1 bg-zinc-700 hover:bg-zinc-600 rounded shadow cursor-pointer">
                 📜 History
             </button>
         </div>
@@ -48,7 +51,7 @@
         </div>
     </div>
 
-    <!-- History Drawer (Now safely placed outside the screen) -->
+    <!-- History Drawer -->
     <div id="history-panel" class="hidden absolute top-32 left-5 right-5 bg-zinc-800/95 border border-zinc-600 rounded-lg p-3 max-h-48 overflow-y-auto text-xs text-zinc-300 font-mono z-50 shadow-2xl backdrop-blur-md">
         <div class="flex justify-between items-center border-b border-zinc-600 pb-2 mb-2 font-sans">
             <span class="font-bold text-zinc-100 text-sm">Past Calculations</span>
