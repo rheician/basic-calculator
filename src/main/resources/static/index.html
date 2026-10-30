@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Basic Calculator</title>
+    <!-- Pulls in Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 flex justify-center items-center h-screen m-0 font-sans">
+<div class="bg-slate-800 p-6 rounded-2xl shadow-2xl w-80">
+    <!-- Display Screen -->
+    <div id="display" class="bg-slate-950 text-sky-400 text-4xl text-right p-5 rounded-xl mb-5 overflow-hidden whitespace-nowrap border border-slate-700">0</div>
+
+    <!-- Button Grid -->
+    <div class="grid grid-cols-4 gap-3">
+        <button class="btn bg-rose-500 hover:bg-rose-600 text-slate-50 p-4 text-xl font-semibold rounded-xl transition active:scale-95" data-action="clear">C</button>
+        <button class="btn bg-indigo-500 hover:bg-indigo-600 text-slate-50 p-4 text-xl font-semibold rounded-xl transition active:scale-95" data-action="operator" data-val="/">/</button>
+        <button class="btn bg-indigo-500 hover:bg-indigo-600 text-slate-50 p-4 text-xl font-semibold rounded-xl transition active:scale-95" data-action="operator" data-val="*">*</button>
+        <button class="btn bg-indigo-500 hover:bg-indigo-600 text-slate-50 p-4 text-xl font-semibold rounded-xl transition active:scale-95" data-action="operator" data-val="-">-</button>
+
+        <button class="btn bg-slate-700 hover:bg-slate-600 text-slate-50 p-4 text-xl font-semibold rounded-xl transition active:scale-95" data-val="7">7</button>
+        <button class="btn bg-slate-700 hover:bg-slate-600 text-slate-50 p-4 text-xl font-semibold rounded-xl transition active:scale-95" data-val="8">8</button>
+        <button class="btn bg-slate-700 hover:bg-slate-600 text-slate-50 p-4 text-xl font-semibold rounded-xl transition active:scale-95" data-val="9">9</button>
+        <button class="btn bg-indigo-500 hover:bg-indigo-600 text-slate-50 p-4 text-xl font-semibold rounded-xl transition active:scale-95" data-action="operator" data-val="+">+</button>
+
+        <button class="btn bg-slate-700 hover:bg-slate-600 text-slate-50 p-4 text-xl font-semibold rounded-xl transition active:scale-95" data-val="4">4</button>
+        <button class="btn bg-slate-700 hover:bg-slate-600 text-slate-50 p-4 text-xl font-semibold rounded-xl transition active:scale-95" data-val="5">5</button>
+        <button class="btn bg-slate-700 hover:bg-slate-600 text-slate-50 p-4 text-xl font-semibold rounded-xl transition active:scale-95" data-val="6">6</button>
+
+        <!-- Submit Button (Spans 3 Rows) -->
+        <button class="btn bg-emerald-500 hover:bg-emerald-600 text-slate-50 p-4 text-xl font-semibold rounded-xl transition active:scale-95 col-start-4 row-start-3 row-span-3 h-full" data-action="calculate">=</button>
+
+        <button class="btn bg-slate-700 hover:bg-slate-600 text-slate-50 p-4 text-xl font-semibold rounded-xl transition active:scale-95" data-val="1">1</button>
+        <button class="btn bg-slate-700 hover:bg-slate-600 text-slate-50 p-4 text-xl font-semibold rounded-xl transition active:scale-95" data-val="2">2</button>
+        <button class="btn bg-slate-700 hover:bg-slate-600 text-slate-50 p-4 text-xl font-semibold rounded-xl transition active:scale-95" data-val="3">3</button>
+
+        <!-- Zero Button (Spans 2 Columns) -->
+        <button class="btn bg-slate-700 hover:bg-slate-600 text-slate-50 p-4 text-xl font-semibold rounded-xl transition active:scale-95 col-span-2" data-val="0">0</button>
+        <button class="btn bg-slate-700 hover:bg-slate-600 text-slate-50 p-4 text-xl font-semibold rounded-xl transition active:scale-95" data-val=".">.</button>
+    </div>
+</div>
+
+<!-- Ensures your JavaScript still routes data to Spring Boot -->
+<script src="/js/app.js"></script>
+</body>
+</html>
