@@ -3,41 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Basic Calculator</title>
+    <title>ClassWiz fx-991CW</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom LCD dot-matrix font feel */
+        @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&display=swap');
+        .lcd-text { font-family: 'Chakra Petch', monospace; }
+    </style>
 </head>
-<body class="bg-black flex justify-center items-center h-screen m-0 font-sans">
-<div class="bg-pink-300 p-6 rounded-2xl shadow-2xl w-80">
+<body class="bg-zinc-950 min-h-screen flex items-center justify-center p-4 selection:bg-none">
 
-    <!-- Display Screen -->
-    <div id="display" class="bg-white text-pink-600 text-4xl text-right p-5 rounded-xl mb-5 overflow-hidden whitespace-nowrap border border-pink-400">0</div>
+<!-- Calculator Body (ClassWiz FX-991CW Matte Casing) -->
+<div class="relative w-full max-w-[360px] bg-zinc-900 border-2 border-zinc-700 rounded-3xl p-5 shadow-[0_20px_50px_rgba(0,0,0,0.8),inset_0_1px_2px_rgba(255,255,255,0.2)]">
 
-    <!-- Button Grid -->
-    <div class="grid grid-cols-4 gap-3">
-        <button class="btn bg-rose-400 hover:bg-rose-500 text-white p-4 text-xl font-semibold rounded-xl transition active:scale-95" data-action="clear">C</button>
-        <button class="btn bg-pink-400 hover:bg-pink-500 text-white p-4 text-xl font-semibold rounded-xl transition active:scale-95" data-action="operator" data-val="/">/</button>
-        <button class="btn bg-pink-400 hover:bg-pink-500 text-white p-4 text-xl font-semibold rounded-xl transition active:scale-95" data-action="operator" data-val="*">*</button>
-        <button class="btn bg-pink-400 hover:bg-pink-500 text-white p-4 text-xl font-semibold rounded-xl transition active:scale-95" data-action="operator" data-val="-">-</button>
+    <!-- Header & Solar Panel -->
+    <div class="flex justify-between items-center mb-3 px-1">
+        <div>
+            <span class="text-zinc-100 font-bold tracking-widest text-sm block">CASIO</span>
+            <span class="text-zinc-400 text-[10px] tracking-wider block font-semibold">ClassWiz fx-991CW</span>
+        </div>
+        <!-- Solar Panel -->
+        <div class="w-16 h-6 bg-amber-950/80 border border-amber-800/60 rounded flex items-center justify-center shadow-inner">
+            <div class="w-full h-[1px] bg-amber-900/40"></div>
+        </div>
+    </div>
 
-        <button class="btn bg-white hover:bg-pink-50 text-pink-900 p-4 text-xl font-semibold rounded-xl transition active:scale-95" data-val="7">7</button>
-        <button class="btn bg-white hover:bg-pink-50 text-pink-900 p-4 text-xl font-semibold rounded-xl transition active:scale-95" data-val="8">8</button>
-        <button class="btn bg-white hover:bg-pink-50 text-pink-900 p-4 text-xl font-semibold rounded-xl transition active:scale-95" data-val="9">9</button>
-        <button class="btn bg-pink-400 hover:bg-pink-500 text-white p-4 text-xl font-semibold rounded-xl transition active:scale-95" data-action="operator" data-val="+">+</button>
+    <!-- LCD Screen Bezel -->
+    <div class="bg-zinc-800 p-3 rounded-xl border border-zinc-700 shadow-inner mb-4">
+        <!-- Screen Header Controls -->
+        <div class="flex justify-between items-center mb-1 text-[10px] text-emerald-600/80 font-mono">
+            <span>MATH / DEG</span>
+            <button id="history-toggle" class="text-xs text-zinc-300 hover:text-emerald-400 transition font-sans font-medium flex items-center gap-1">
+                History
+            </button>
+        </div>
 
-        <button class="btn bg-white hover:bg-pink-50 text-pink-900 p-4 text-xl font-semibold rounded-xl transition active:scale-95" data-val="4">4</button>
-        <button class="btn bg-white hover:bg-pink-50 text-pink-900 p-4 text-xl font-semibold rounded-xl transition active:scale-95" data-val="5">5</button>
-        <button class="btn bg-white hover:bg-pink-50 text-pink-900 p-4 text-xl font-semibold rounded-xl transition active:scale-95" data-val="6">6</button>
+        <!-- Dual-Line LCD Display -->
+        <div class="bg-[#99ab94] text-zinc-900 p-3 rounded-lg border border-zinc-600/50 shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)] min-h-[85px] flex flex-col justify-between lcd-text">
+            <!-- Line 1: Expression / Last Input Preview -->
+            <div id="expression" class="text-right text-xs opacity-70 h-4 overflow-hidden whitespace-nowrap"></div>
+            <!-- Line 2: Main Display / Active Input -->
+            <div id="display" class="text-right text-3xl font-bold tracking-wider overflow-hidden whitespace-nowrap">0</div>
+        </div>
+    </div>
 
-        <!-- Submit Button (Spans 3 Rows) -->
-        <button class="btn bg-pink-600 hover:bg-pink-700 text-white p-4 text-xl font-semibold rounded-xl transition active:scale-95 col-start-4 row-start-3 row-span-3 h-full" data-action="calculate">=</button>
+    <!-- History Drawer (Collapsible) -->
+    <div id="history-panel" class="hidden bg-zinc-800 border border-zinc-700 rounded-xl p-3 mb-4 max-h-36 overflow-y-auto text-xs text-zinc-300 font-mono">
+        <div class="flex justify-between items-center border-b border-zinc-700 pb-1 mb-2 font-sans font-bold text-zinc-400">
+            <span>Past Calculations</span>
+            <button id="clear-history" class="text-rose-400 hover:underline text-[10px]">Clear</button>
+        </div>
+        <ul id="history-list" class="space-y-1.5 divide-y divide-zinc-700/50">
+            <li class="text-zinc-500 italic">No history yet</li>
+        </ul>
+    </div>
 
-        <button class="btn bg-white hover:bg-pink-50 text-pink-900 p-4 text-xl font-semibold rounded-xl transition active:scale-95" data-val="1">1</button>
-        <button class="btn bg-white hover:bg-pink-50 text-pink-900 p-4 text-xl font-semibold rounded-xl transition active:scale-95" data-val="2">2</button>
-        <button class="btn bg-white hover:bg-pink-50 text-pink-900 p-4 text-xl font-semibold rounded-xl transition active:scale-95" data-val="3">3</button>
+    <!-- Navigation Wheel (Signature FX-991CW D-Pad) -->
+    <div class="flex justify-center mb-4">
+        <div class="relative w-20 h-20 rounded-full bg-gradient-to-b from-zinc-700 to-zinc-800 border border-zinc-600 shadow-[0_4px_6px_rgba(0,0,0,0.5)] flex items-center justify-center">
+            <div class="w-10 h-10 rounded-full bg-zinc-900 border border-zinc-700 shadow-inner flex items-center justify-center text-[10px] text-zinc-400 font-bold">
+                OK
+            </div>
+        </div>
+    </div>
 
-        <!-- Zero Button (Spans 2 Columns) -->
-        <button class="btn bg-white hover:bg-pink-50 text-pink-900 p-4 text-xl font-semibold rounded-xl transition active:scale-95 col-span-2" data-val="0">0</button>
-        <button class="btn bg-white hover:bg-pink-50 text-pink-900 p-4 text-xl font-semibold rounded-xl transition active:scale-95" data-val=".">.</button>
+    <!-- Keypad Grid with 3D Keycaps -->
+    <div class="grid grid-cols-4 gap-2.5">
+        <!-- Clear Button -->
+        <button class="btn bg-rose-700 hover:bg-rose-600 active:translate-y-1 text-white py-3 rounded-lg font-bold shadow-[0_4px_0_#9f1239] active:shadow-none transition-all" data-action="clear">AC</button>
+        <button class="btn bg-zinc-700 hover:bg-zinc-600 active:translate-y-1 text-zinc-100 py-3 rounded-lg font-bold shadow-[0_4px_0_#3f3f46] active:shadow-none transition-all" data-action="operator" data-val="/">÷</button>
+        <button class="btn bg-zinc-700 hover:bg-zinc-600 active:translate-y-1 text-zinc-100 py-3 rounded-lg font-bold shadow-[0_4px_0_#3f3f46] active:shadow-none transition-all" data-action="operator" data-val="*">×</button>
+        <button class="btn bg-zinc-700 hover:bg-zinc-600 active:translate-y-1 text-zinc-100 py-3 rounded-lg font-bold shadow-[0_4px_0_#3f3f46] active:shadow-none transition-all" data-action="operator" data-val="-">-</button>
+
+        <!-- Numbers & Operators -->
+        <button class="btn bg-zinc-200 hover:bg-white active:translate-y-1 text-zinc-900 py-3 rounded-lg font-bold shadow-[0_4px_0_#9ca3af] active:shadow-none transition-all" data-val="7">7</button>
+        <button class="btn bg-zinc-200 hover:bg-white active:translate-y-1 text-zinc-900 py-3 rounded-lg font-bold shadow-[0_4px_0_#9ca3af] active:shadow-none transition-all" data-val="8">8</button>
+        <button class="btn bg-zinc-200 hover:bg-white active:translate-y-1 text-zinc-900 py-3 rounded-lg font-bold shadow-[0_4px_0_#9ca3af] active:shadow-none transition-all" data-val="9">9</button>
+        <button class="btn bg-zinc-700 hover:bg-zinc-600 active:translate-y-1 text-zinc-100 py-3 rounded-lg font-bold shadow-[0_4px_0_#3f3f46] active:shadow-none transition-all" data-action="operator" data-val="+">+</button>
+
+        <button class="btn bg-zinc-200 hover:bg-white active:translate-y-1 text-zinc-900 py-3 rounded-lg font-bold shadow-[0_4px_0_#9ca3af] active:shadow-none transition-all" data-val="4">4</button>
+        <button class="btn bg-zinc-200 hover:bg-white active:translate-y-1 text-zinc-900 py-3 rounded-lg font-bold shadow-[0_4px_0_#9ca3af] active:shadow-none transition-all" data-val="5">5</button>
+        <button class="btn bg-zinc-200 hover:bg-white active:translate-y-1 text-zinc-900 py-3 rounded-lg font-bold shadow-[0_4px_0_#9ca3af] active:shadow-none transition-all" data-val="6">6</button>
+
+        <!-- Equals (EXE) Key Spans 2 Rows -->
+        <button class="btn bg-sky-600 hover:bg-sky-500 active:translate-y-1 text-white py-3 rounded-lg font-bold shadow-[0_4px_0_#0369a1] active:shadow-none transition-all col-start-4 row-start-3 row-span-2 h-full flex items-center justify-center text-xl" data-action="calculate">=</button>
+
+        <button class="btn bg-zinc-200 hover:bg-white active:translate-y-1 text-zinc-900 py-3 rounded-lg font-bold shadow-[0_4px_0_#9ca3af] active:shadow-none transition-all" data-val="1">1</button>
+        <button class="btn bg-zinc-200 hover:bg-white active:translate-y-1 text-zinc-900 py-3 rounded-lg font-bold shadow-[0_4px_0_#9ca3af] active:shadow-none transition-all" data-val="2">2</button>
+        <button class="btn bg-zinc-200 hover:bg-white active:translate-y-1 text-zinc-900 py-3 rounded-lg font-bold shadow-[0_4px_0_#9ca3af] active:shadow-none transition-all" data-val="3">3</button>
+
+        <button class="btn bg-zinc-200 hover:bg-white active:translate-y-1 text-zinc-900 py-3 rounded-lg font-bold shadow-[0_4px_0_#9ca3af] active:shadow-none transition-all col-span-2" data-val="0">0</button>
+        <button class="btn bg-zinc-200 hover:bg-white active:translate-y-1 text-zinc-900 py-3 rounded-lg font-bold shadow-[0_4px_0_#9ca3af] active:shadow-none transition-all" data-val=".">.</button>
     </div>
 </div>
 
