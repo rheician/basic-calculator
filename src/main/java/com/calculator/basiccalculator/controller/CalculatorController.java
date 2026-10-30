@@ -27,6 +27,5 @@ public class CalculatorController {
     }
 }
 
-// DTOs placed in the same file to save space
 record CalculationRequest(double num1, double num2, String operator) {}
 record CalculationResponse(double result, String error) {}
