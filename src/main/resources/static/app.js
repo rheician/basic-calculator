@@ -5,10 +5,24 @@ const historyList = document.getElementById('history-list');
 const historyToggle = document.getElementById('history-toggle');
 const clearHistoryBtn = document.getElementById('clear-history');
 
-// Audio Setup
+// Audio & Video Setup
 const decimalSound = new Audio('https://www.myinstants.com/media/sounds/fahhh.mp3');
 decimalSound.volume = 1.0;
-let audioUnlocked = false; // Tracks if we bypassed the browser's audio block
+let audioUnlocked = false;
+
+const rickrollVid = document.getElementById('rickroll-vid');
+
+// ==========================================
+// STEP 2: Click outside to close the video
+// ==========================================
+document.addEventListener('click', (e) => {
+    if (!rickrollVid.classList.contains('hidden')) {
+        if (e.target !== rickrollVid && !e.target.closest('[data-val="rickroll"]')) {
+            rickrollVid.pause();
+            rickrollVid.classList.add('hidden');
+        }
+    }
+});
 
 let currentInput = '';
 let previousInput = '';
@@ -16,9 +30,13 @@ let currentOperator = null;
 let shouldResetInput = false;
 let calculationHistory = [];
 
+// ---------------------------------------------------
+// Main Calculator Logic
+// ---------------------------------------------------
 document.querySelectorAll('.btn').forEach(button => {
     button.addEventListener('click', async () => {
-        // Unlock browser audio security on the very first click
+
+        // Unlock browser audio security
         if (!audioUnlocked) {
             decimalSound.play().then(() => {
                 decimalSound.pause();
@@ -51,9 +69,14 @@ document.querySelectorAll('.btn').forEach(button => {
             updateDisplay();
 
         } else if (action === 'easter-egg') {
-            if (value === 'rickroll') window.open('https://youtu.be/Aq5WXmQQooo?si=ZdDL1mXw10bxuD0c', '_blank');
-            if (value === 'orgchem') window.open('https://youtu.be/ZtTO8uUGy2Y?si=3VY-ssfDV-N1ztUS', '_blank');
-
+            if (value === 'rickroll') {
+                rickrollVid.classList.remove('hidden');
+                rickrollVid.currentTime = 0;
+                rickrollVid.play().catch(e => console.log("Video blocked:", e));
+            }
+            if (value === 'orgchem') {
+                window.open('https://youtu.be/ZtTO8uUGy2Y?si=3VY-ssfDV-N1ztUS', '_blank');
+            }
         } else if (action === 'sqrt') {
             if (currentInput === '' && previousInput === '') return;
             currentOperator = 'sqrt';
@@ -119,7 +142,6 @@ async function calculate() {
         if (response.ok) {
             const resultStr = data.result.toString();
 
-            // Audio Trigger for Decimals
             if (resultStr.includes('.')) {
                 decimalSound.currentTime = 0;
                 decimalSound.play().catch(e => console.log("Audio blocked:", e));
@@ -132,7 +154,6 @@ async function calculate() {
             expressionDisplay.innerText = `${fullExpression} =`;
             currentInput = resultStr;
             updateDisplay();
-
             addHistoryItem(fullExpression, resultStr);
 
             currentOperator = null;
@@ -244,7 +265,6 @@ function renderHistory() {
         historyList.innerHTML = `<li class="text-zinc-500 italic px-2 py-1">No history yet</li>`;
         return;
     }
-    // Added data-val attributes to securely store the result
     historyList.innerHTML = calculationHistory.map(item => `
         <li class="history-item p-2 flex justify-between items-center hover:bg-zinc-700/80 rounded cursor-pointer transition-colors" data-val="${item.result}">
             <span class="text-zinc-400 pointer-events-none">${item.expr} =</span>
@@ -253,7 +273,6 @@ function renderHistory() {
     `).join('');
 }
 
-// Secure Event Listener for History Clicks
 historyList.addEventListener('click', (e) => {
     const item = e.target.closest('.history-item');
     if (!item) return;
