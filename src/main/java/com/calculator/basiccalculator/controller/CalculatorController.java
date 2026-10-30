@@ -18,6 +18,10 @@ public class CalculatorController {
                     if (request.num2() == 0) throw new IllegalArgumentException("Cannot divide by zero");
                     yield request.num1() / request.num2();
                 }
+                case "sqrt" -> {
+                    if (request.num2() < 0) throw new IllegalArgumentException("Negative root");
+                    yield Math.sqrt(request.num2());
+                }
                 default -> throw new IllegalArgumentException("Invalid operator");
             };
             return ResponseEntity.ok(new CalculationResponse(result, null));
