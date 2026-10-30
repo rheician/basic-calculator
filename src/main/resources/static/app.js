@@ -4,6 +4,7 @@ let previousInput = '';
 let currentOperator = null;
 let shouldResetInput = false; // Added to track when a calculation just finished
 
+
 // Added 'async' to the click listener
 document.querySelectorAll('.btn').forEach(button => {
     button.addEventListener('click', async () => {
