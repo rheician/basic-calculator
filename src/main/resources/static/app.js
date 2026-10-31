@@ -7,41 +7,27 @@ const clearHistoryBtn = document.getElementById('clear-history');
 const closeHistoryBtn = document.getElementById('close-history');
 const rickrollVid = document.getElementById('rickroll-vid');
 
-// Decimal and general audio setup
 const decimalSound = new Audio('https://www.myinstants.com/media/sounds/fahhh.mp3');
 decimalSound.volume = 1.0;
 let audioUnlocked = false;
 
-// ---------------------------------------------------
-// Loud Spoken Number Voice Engine (Instant & Overlapping)
-// ---------------------------------------------------
 const platinumWords = {
-    '0': 'Zero',
-    '1': 'One',
-    '2': 'Two',
-    '3': 'Three',
-    '4': 'Four',
-    '5': 'Five',
-    '6': 'Six',
-    '7': 'Seven',
-    '8': 'Eight',
-    '9': 'Nine'
+    '0': 'Zero', '1': 'One', '2': 'Two', '3': 'Three', '4': 'Four',
+    '5': 'Five', '6': 'Six', '7': 'Seven', '8': 'Eight', '9': 'Nine'
 };
 
 function playSpokenNumber(num) {
     if (!('speechSynthesis' in window)) return;
-
     const word = platinumWords[num];
     if (!word) return;
 
-    // Reset speech engine state so rapid clicks speak immediately
     if (window.speechSynthesis.paused) {
         window.speechSynthesis.resume();
     }
 
     const utter = new SpeechSynthesisUtterance(word);
-    utter.rate = 1.7;   // Snappy, energetic pace
-    utter.pitch = 1.25;  // Bright, loud female tone
+    utter.rate = 1.7;
+    utter.pitch = 1.25;
     utter.volume = 1.0;
 
     const voices = window.speechSynthesis.getVoices();
@@ -54,39 +40,11 @@ function playSpokenNumber(num) {
     window.speechSynthesis.speak(utter);
 }
 
-// ---------------------------------------------------
-// Dynamic Filipino Karaoke Score Commentator
-// ---------------------------------------------------
 function getKaraokeRemarks(scoreNum) {
-    if (scoreNum < 50) {
-        return {
-            speech: `${scoreNum} points! Practice more!`,
-            label: "PRACTICE PA MORE!",
-            color: "text-rose-500",
-            sub: "MASAKIT SA TENGA!"
-        };
-    } else if (scoreNum < 80) {
-        return {
-            speech: `${scoreNum} points! Good try!`,
-            label: "PWEDE NA! NOT BAD!",
-            color: "text-amber-400",
-            sub: "TRY AGAIN NEXT TIME!"
-        };
-    } else if (scoreNum < 100) {
-        return {
-            speech: `${scoreNum} points! You're a great singer!`,
-            label: "YOU'RE A GREAT SINGER!",
-            color: "text-sky-400",
-            sub: "GALING KUMANTA!"
-        };
-    } else {
-        return {
-            speech: `${scoreNum} points! Perfect score! You're a superstar!`,
-            label: "PERFECT! YOU'RE A SUPERSTAR!",
-            color: "text-yellow-400",
-            sub: "IDOL! PANG CONCERT ANG BOSES!"
-        };
-    }
+    if (scoreNum < 50) return { speech: `${scoreNum} points! Practice more!`, label: "PRACTICE PA MORE!", color: "text-rose-500", sub: "MASAKIT SA TENGA!" };
+    if (scoreNum < 80) return { speech: `${scoreNum} points! Good try!`, label: "PWEDE NA! NOT BAD!", color: "text-amber-400", sub: "TRY AGAIN NEXT TIME!" };
+    if (scoreNum < 100) return { speech: `${scoreNum} points! You're a great singer!`, label: "YOU'RE A GREAT SINGER!", color: "text-sky-400", sub: "GALING KUMANTA!" };
+    return { speech: `${scoreNum} points! Perfect score! You're a superstar!`, label: "PERFECT! YOU'RE A SUPERSTAR!", color: "text-yellow-400", sub: "IDOL! PANG CONCERT ANG BOSES!" };
 }
 
 function playKaraokeApplauseCheer(scoreStr) {
@@ -115,7 +73,6 @@ if ('speechSynthesis' in window) {
     window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
 }
 
-// Close rickroll video on background click
 document.addEventListener('click', (e) => {
     if (!rickrollVid.classList.contains('hidden')) {
         if (e.target !== rickrollVid && !e.target.closest('[data-val="rickroll"]')) {
@@ -131,9 +88,6 @@ let currentOperator = null;
 let shouldResetInput = false;
 let calculationHistory = [];
 
-// ---------------------------------------------------
-// KARAOKE SONGS - 50
-// ---------------------------------------------------
 const karaokeSongs = [
     { title: "Miss Flawless", artist: "Grin Department", lyrics: ["Miss Flawless, kay ganda mong dalaga...", "Lahat ng lalaki sa'yo ay napapanganga!"] },
     { title: "Otso-Otso", artist: "Bayani Agbayani", lyrics: ["Itaas ang kamay, igalaw ang baywang...", "Mag-otso-otso tayo hanggang umaga!"] },
@@ -187,9 +141,6 @@ const karaokeSongs = [
     { title: "Paubaya", artist: "Moira Dela Torre", lyrics: ["Pinapalaya na kita sa sakit at luha...", "Ipaubaya na lang natin sa tadhana!"] }
 ];
 
-// ---------------------------------------------------
-// Karaoke Lyrics & Result-Linked Score Engine
-// ---------------------------------------------------
 async function playKaraokeLyrics(n1, n2, op, resultScoreStr) {
     const vis = document.getElementById('visualizer');
     const song = karaokeSongs[Math.floor(Math.random() * karaokeSongs.length)];
@@ -199,13 +150,13 @@ async function playKaraokeLyrics(n1, n2, op, resultScoreStr) {
             <div class="w-full flex justify-between items-center text-xs sm:text-sm font-mono tracking-widest text-emerald-400 border-b border-zinc-800 pb-3">
                 <span class="animate-pulse flex items-center gap-1.5">
                     <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                    ▶ KARAOKE CHORUS TIME
+                    KARAOKE CHORUS TIME
                 </span>
                 <span class="bg-zinc-800 px-3 py-1 rounded text-zinc-300 font-bold">SONG NO: ${Math.floor(10000 + Math.random() * 90000)}</span>
             </div>
 
             <div class="flex flex-col items-center justify-center my-auto px-4 max-w-2xl w-full">
-                <p class="text-xs sm:text-sm font-bold tracking-widest text-yellow-400 uppercase mb-2">♪ ${song.artist} ♪</p>
+                <p class="text-xs sm:text-sm font-bold tracking-widest text-yellow-400 uppercase mb-2">${song.artist}</p>
                 <h1 class="text-2xl sm:text-4xl font-black text-white tracking-wider mb-6 drop-shadow-[0_2px_10px_rgba(255,255,255,0.4)]">
                     "${song.title}"
                 </h1>
@@ -222,11 +173,11 @@ async function playKaraokeLyrics(n1, n2, op, resultScoreStr) {
                 <div class="w-full bg-zinc-800 h-2.5 rounded-full mt-6 overflow-hidden border border-zinc-700">
                     <div id="singing-progress" class="bg-gradient-to-r from-sky-400 to-emerald-400 h-full w-0 transition-all ease-linear" style="transition-duration: 6000ms;"></div>
                 </div>
-                <p class="text-[11px] text-zinc-400 font-mono tracking-wider mt-2 animate-pulse">🎤 SING THE CHORUS OUT LOUD...</p>
+                <p class="text-[11px] text-zinc-400 font-mono tracking-wider mt-2 animate-pulse">SING THE CHORUS OUT LOUD...</p>
             </div>
 
             <div class="text-xs font-mono text-zinc-500 tracking-wider">
-                CASIO ClassWiz fx-991CW • COMPUTING: ${n1} ${getSymbol(op)} ${n2}
+                CASIONG ClassWiz fx-991CW • COMPUTING: ${n1} ${getSymbol(op)} ${n2}
             </div>
         </div>
     `;
@@ -238,10 +189,8 @@ async function playKaraokeLyrics(n1, n2, op, resultScoreStr) {
         if (bar) bar.style.width = '100%';
     }, 50);
 
-    // Chorus First Line (3s)
     await new Promise(r => setTimeout(r, 3000));
 
-    // Shift to Chorus Second Line (3s)
     const l1 = document.getElementById('karaoke-line-1');
     const l2 = document.getElementById('karaoke-line-2');
     if (l1 && l2) {
@@ -275,9 +224,6 @@ async function playKaraokeLyrics(n1, n2, op, resultScoreStr) {
     vis.classList.add('hidden');
 }
 
-// ---------------------------------------------------
-// Button Listeners & Calculator Logic
-// ---------------------------------------------------
 document.querySelectorAll('.btn').forEach(button => {
     button.addEventListener('click', async () => {
         if (!audioUnlocked) {
@@ -490,9 +436,6 @@ async function evaluateOperation(isFinalCalculation) {
     updateDisplay();
 }
 
-// ---------------------------------------------------
-// History Drawer Logic1
-// ---------------------------------------------------
 function addHistoryItem(expr, result) {
     calculationHistory.unshift({ expr, result });
     renderHistory();

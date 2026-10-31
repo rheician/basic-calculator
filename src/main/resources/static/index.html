@@ -10,35 +10,29 @@
         .lcd-text { font-family: 'Chakra Petch', monospace; }
         .block-item { transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1); }
 
+        /* Hides the scrollbar circle completely */
+        .lcd-scroll {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
         .lcd-scroll::-webkit-scrollbar {
-            height: 3px;
-        }
-        .lcd-scroll::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        .lcd-scroll::-webkit-scrollbar-thumb {
-            background: rgba(39, 39, 42, 0.35);
-            border-radius: 9999px;
+            display: none;
         }
     </style>
 </head>
 <body class="bg-zinc-950 min-h-screen flex items-center justify-center p-4 selection:bg-none relative overflow-x-hidden">
 
-<!-- Fullscreen Karaoke Lyrics & Scoring Overlay -->
 <div id="visualizer" class="hidden fixed inset-0 bg-black/95 z-50 flex flex-col items-center justify-center text-white backdrop-blur-sm"></div>
 
-<!-- Outer Anchor: Centers Calculator on the Page -->
 <div class="relative flex items-center justify-center">
 
-    <!-- Calculator Body: Fixed 360px width, never resizes or shifts -->
     <div class="relative w-[360px] min-w-[360px] max-w-[360px] bg-zinc-900 border-2 border-zinc-700 rounded-3xl p-5 shadow-[0_20px_50px_rgba(0,0,0,0.8)] z-10 shrink-0">
 
-        <!-- Local Rickroll Video Overlay -->
         <video id="rickroll-vid" src="/Voicy_rickroll.mp4" class="hidden absolute top-0 left-0 w-full h-full object-cover z-50 rounded-[1.3rem]" playsinline></video>
 
         <div class="flex justify-between items-center mb-3 px-1">
             <div>
-                <span class="text-zinc-100 font-bold tracking-widest text-sm block">CASIO</span>
+                <span class="text-zinc-100 font-bold tracking-widest text-sm block">CASIONG</span>
                 <span class="text-zinc-400 text-[10px] tracking-wider block font-semibold">ClassWiz fx-991CW</span>
             </div>
             <div class="w-16 h-6 bg-amber-950/80 border border-amber-800/60 rounded flex items-center justify-center shadow-inner">
@@ -46,12 +40,11 @@
             </div>
         </div>
 
-        <!-- LCD Screen Area -->
-        <div class="bg-zinc-800 p-3 rounded-xl border border-zinc-700 shadow-inner mb-4 relative z-10">
+        <div class="bg-zinc-800 p-3 rounded-xl border border-zinc-700 shadow-inner mb-8 relative z-10">
             <div class="flex justify-between items-center mb-1 text-[10px] text-emerald-600/80 font-mono">
                 <span>MATH / DEG</span>
                 <button id="history-toggle" class="text-xs text-zinc-200 hover:text-white transition font-sans font-medium px-2 py-1 bg-zinc-700 hover:bg-zinc-600 rounded shadow cursor-pointer">
-                    📜 History
+                    History
                 </button>
             </div>
 
@@ -61,55 +54,54 @@
             </div>
         </div>
 
-        <!-- Navigation D-Pad -->
-        <div class="flex justify-center mb-4 relative z-0">
-            <div class="relative w-20 h-20 rounded-full bg-gradient-to-b from-zinc-700 to-zinc-800 border border-zinc-600 shadow-lg flex items-center justify-center">
-                <div class="w-10 h-10 rounded-full bg-zinc-900 border border-zinc-700 shadow-inner flex items-center justify-center text-[10px] text-zinc-400 font-bold">OK</div>
-            </div>
-        </div>
-
-        <!-- Keypad Grid -->
         <div class="grid grid-cols-4 gap-2.5 relative z-0">
+            <!-- Row 1: Top Functions -->
             <button class="btn bg-zinc-800 text-zinc-300 py-2 rounded-lg font-mono text-sm shadow-[0_3px_0_#27272a] active:translate-y-1 active:shadow-none transition-all" data-action="sqrt">√■</button>
             <button class="btn bg-zinc-800 text-zinc-300 py-2 rounded-lg font-mono text-sm shadow-[0_3px_0_#27272a] active:translate-y-1 active:shadow-none transition-all" data-action="easter-egg" data-val="orgchem">xⁿ</button>
-            <button class="btn bg-zinc-800 text-zinc-300 py-2 rounded-lg font-mono text-sm italic shadow-[0_3px_0_#27272a] active:translate-y-1 active:shadow-none transition-all" data-action="easter-egg" data-val="rickroll">$x$</button>
+            <button class="btn bg-zinc-800 text-zinc-300 py-2 rounded-lg font-mono text-sm shadow-[0_3px_0_#27272a] active:translate-y-1 active:shadow-none transition-all" data-action="easter-egg" data-val="rickroll"><span class="italic font-serif font-semibold">x</span></button>
             <button class="btn bg-rose-900 text-rose-300 py-2 rounded-lg font-bold text-sm shadow-[0_3px_0_#4c0519] active:translate-y-1 active:shadow-none transition-all" data-action="delete">DEL</button>
 
-            <button class="btn bg-rose-700 text-white py-3 rounded-lg font-bold shadow-[0_4px_0_#9f1239] active:translate-y-1 active:shadow-none transition-all" data-action="clear">AC</button>
-            <button class="btn bg-zinc-700 text-zinc-100 py-3 rounded-lg font-bold shadow-[0_4px_0_#3f3f46] active:translate-y-1 active:shadow-none transition-all" data-action="operator" data-val="/">÷</button>
-            <button class="btn bg-zinc-700 text-zinc-100 py-3 rounded-lg font-bold shadow-[0_4px_0_#3f3f46] active:translate-y-1 active:shadow-none transition-all" data-action="operator" data-val="*">×</button>
+            <!-- Row 2: Operations in one row -->
+            <button class="btn bg-zinc-700 text-zinc-100 py-3 rounded-lg font-bold shadow-[0_4px_0_#3f3f46] active:translate-y-1 active:shadow-none transition-all" data-action="operator" data-val="+">+</button>
             <button class="btn bg-zinc-700 text-zinc-100 py-3 rounded-lg font-bold shadow-[0_4px_0_#3f3f46] active:translate-y-1 active:shadow-none transition-all" data-action="operator" data-val="-">-</button>
+            <button class="btn bg-zinc-700 text-zinc-100 py-3 rounded-lg font-bold shadow-[0_4px_0_#3f3f46] active:translate-y-1 active:shadow-none transition-all" data-action="operator" data-val="*">×</button>
+            <button class="btn bg-zinc-700 text-zinc-100 py-3 rounded-lg font-bold shadow-[0_4px_0_#3f3f46] active:translate-y-1 active:shadow-none transition-all" data-action="operator" data-val="/">÷</button>
 
+            <!-- Row 3 -->
             <button class="btn bg-zinc-200 text-zinc-900 py-3 rounded-lg font-bold shadow-[0_4px_0_#9ca3af] active:translate-y-1 active:shadow-none transition-all" data-val="7">7</button>
             <button class="btn bg-zinc-200 text-zinc-900 py-3 rounded-lg font-bold shadow-[0_4px_0_#9ca3af] active:translate-y-1 active:shadow-none transition-all" data-val="8">8</button>
             <button class="btn bg-zinc-200 text-zinc-900 py-3 rounded-lg font-bold shadow-[0_4px_0_#9ca3af] active:translate-y-1 active:shadow-none transition-all" data-val="9">9</button>
-            <button class="btn bg-zinc-700 text-zinc-100 py-3 rounded-lg font-bold shadow-[0_4px_0_#3f3f46] active:translate-y-1 active:shadow-none transition-all" data-action="operator" data-val="+">+</button>
 
+            <!-- Equals spanning Row 3, 4, 5 -->
+            <button class="btn bg-sky-600 text-white py-3 rounded-lg font-bold shadow-[0_4px_0_#0369a1] active:translate-y-1 active:shadow-none transition-all col-start-4 row-start-3 row-span-3 h-full flex items-center justify-center text-xl" data-action="calculate">=</button>
+
+            <!-- Row 4 -->
             <button class="btn bg-zinc-200 text-zinc-900 py-3 rounded-lg font-bold shadow-[0_4px_0_#9ca3af] active:translate-y-1 active:shadow-none transition-all" data-val="4">4</button>
             <button class="btn bg-zinc-200 text-zinc-900 py-3 rounded-lg font-bold shadow-[0_4px_0_#9ca3af] active:translate-y-1 active:shadow-none transition-all" data-val="5">5</button>
             <button class="btn bg-zinc-200 text-zinc-900 py-3 rounded-lg font-bold shadow-[0_4px_0_#9ca3af] active:translate-y-1 active:shadow-none transition-all" data-val="6">6</button>
 
-            <button class="btn bg-sky-600 text-white py-3 rounded-lg font-bold shadow-[0_4px_0_#0369a1] active:translate-y-1 active:shadow-none transition-all col-start-4 row-start-4 row-span-2 h-full flex items-center justify-center text-xl" data-action="calculate">=</button>
-
+            <!-- Row 5 -->
             <button class="btn bg-zinc-200 text-zinc-900 py-3 rounded-lg font-bold shadow-[0_4px_0_#9ca3af] active:translate-y-1 active:shadow-none transition-all" data-val="1">1</button>
             <button class="btn bg-zinc-200 text-zinc-900 py-3 rounded-lg font-bold shadow-[0_4px_0_#9ca3af] active:translate-y-1 active:shadow-none transition-all" data-val="2">2</button>
             <button class="btn bg-zinc-200 text-zinc-900 py-3 rounded-lg font-bold shadow-[0_4px_0_#9ca3af] active:translate-y-1 active:shadow-none transition-all" data-val="3">3</button>
 
+            <!-- Row 6 -->
             <button class="btn bg-zinc-200 text-zinc-900 py-3 rounded-lg font-bold shadow-[0_4px_0_#9ca3af] active:translate-y-1 active:shadow-none transition-all col-span-2" data-val="0">0</button>
             <button class="btn bg-zinc-200 text-zinc-900 py-3 rounded-lg font-bold shadow-[0_4px_0_#9ca3af] active:translate-y-1 active:shadow-none transition-all" data-val=".">.</button>
+
+            <!-- AC located underneath the Equal Sign -->
+            <button class="btn bg-rose-700 text-white py-3 rounded-lg font-bold shadow-[0_4px_0_#9f1239] active:translate-y-1 active:shadow-none transition-all col-start-4 row-start-6" data-action="clear">AC</button>
         </div>
     </div>
 
-    <!-- Floating History Side Panel: Anchored strictly to the right side on desktop, bottom overlay on mobile -->
     <div id="history-panel" class="hidden fixed bottom-4 inset-x-4 max-w-[360px] mx-auto md:absolute md:inset-x-auto md:bottom-auto md:left-full md:top-0 md:ml-6 w-full md:w-80 bg-zinc-900/95 border-2 border-zinc-700 rounded-3xl p-4 shadow-[0_15px_35px_rgba(0,0,0,0.8)] backdrop-blur-md z-30">
         <div class="flex justify-between items-center border-b border-zinc-700 pb-3 mb-3 font-sans">
             <div class="flex items-center gap-2">
-                <span class="text-emerald-400 text-base">📜</span>
                 <span class="font-bold text-zinc-100 text-sm tracking-wide">Past Calculations</span>
             </div>
             <div class="flex items-center gap-3">
                 <button id="clear-history" class="text-xs text-rose-400 hover:text-rose-300 font-semibold transition-colors">Clear</button>
-                <button id="close-history" class="text-xs text-zinc-400 hover:text-zinc-200 font-bold transition-colors">✕</button>
+                <button id="close-history" class="text-xs text-zinc-400 hover:text-zinc-200 font-bold transition-colors">X</button>
             </div>
         </div>
         <ul id="history-list" class="space-y-1.5 max-h-60 md:max-h-[460px] overflow-y-auto pr-1 text-xs text-zinc-300 font-mono divide-y divide-zinc-800/80"></ul>
