@@ -83,8 +83,7 @@ document.addEventListener('click', (e) => {
 });
 
 let currentInput = '';
-let previousInput = '';
-let currentOperator = null;
+let expressionTokens = [];
 let shouldResetInput = false;
 let calculationHistory = [];
 
@@ -141,7 +140,7 @@ const karaokeSongs = [
     { title: "Paubaya", artist: "Moira Dela Torre", lyrics: ["Pinapalaya na kita sa sakit at luha...", "Ipaubaya na lang natin sa tadhana!"] }
 ];
 
-async function playKaraokeLyrics(n1, n2, op, resultScoreStr) {
+async function playKaraokeLyrics(exprText, resultScoreStr) {
     const vis = document.getElementById('visualizer');
     const song = karaokeSongs[Math.floor(Math.random() * karaokeSongs.length)];
 
@@ -177,7 +176,7 @@ async function playKaraokeLyrics(n1, n2, op, resultScoreStr) {
             </div>
 
             <div class="text-xs font-mono text-zinc-500 tracking-wider">
-                CASIONG ClassWiz fx-991CW • COMPUTING: ${n1} ${getSymbol(op)} ${n2}
+                CASIONG ClassWiz fx-991CW • COMPUTING: ${exprText}
             </div>
         </div>
     `;
@@ -200,10 +199,10 @@ async function playKaraokeLyrics(n1, n2, op, resultScoreStr) {
 
     await new Promise(r => setTimeout(r, 3000));
 
+    playKaraokeApplauseCheer(resultScoreStr);
+
     const numericScore = parseFloat(resultScoreStr) || 0;
     const remark = getKaraokeRemarks(numericScore);
-
-    playKaraokeApplauseCheer(resultScoreStr);
 
     vis.innerHTML = `
         <div class="flex flex-col items-center justify-center p-8 bg-black/95 w-full h-full text-center">
@@ -248,7 +247,7 @@ document.querySelectorAll('.btn').forEach(button => {
         } else if (action === 'sqrt') {
             handleSquareRoot();
         } else if (action === 'operator') {
-            await handleOperator(value);
+            handleOperator(value);
         } else if (action === 'calculate') {
             await handleCalculateButton();
         }
@@ -262,29 +261,42 @@ function handleNumber(val) {
 
     if (shouldResetInput) {
         currentInput = val === '.' ? '0.' : '';
+        expressionTokens = [];
         shouldResetInput = false;
     }
 
     if (val === '.') {
-        if (currentInput === '') currentInput = '0.';
+        if (currentInput === '' || currentInput === '-') currentInput += '0.';
         else if (currentInput.includes('.')) return;
         else currentInput += '.';
     } else {
         if (currentInput === '0') currentInput = val;
+        else if (currentInput === '-0') currentInput = '-' + val;
         else currentInput += val;
     }
     updateDisplay();
 }
 
 function handleDelete() {
-    currentInput = currentInput.toString().slice(0, -1);
+    if (shouldResetInput) {
+        resetAll();
+        return;
+    }
+
+    if (currentInput !== '') {
+        currentInput = currentInput.slice(0, -1);
+    } else if (expressionTokens.length > 0) {
+        const last = expressionTokens.pop();
+        if (['+', '-', '*', '/'].includes(last)) {
+            currentInput = expressionTokens.pop() || '';
+        }
+    }
     updateDisplay();
 }
 
 function resetAll() {
     currentInput = '';
-    previousInput = '';
-    currentOperator = null;
+    expressionTokens = [];
     shouldResetInput = false;
     expressionDisplay.innerText = '';
     display.innerText = '0';
@@ -300,40 +312,53 @@ function handleEasterEgg(val) {
     }
 }
 
-async function handleSquareRoot() {
-    const target = currentInput || previousInput;
-    if (!target) return;
-
-    currentOperator = 'sqrt';
-    previousInput = target;
-    currentInput = target;
-    await evaluateOperation(true);
-}
-
-async function handleOperator(op) {
-    if (currentInput === '' && previousInput === '') return;
-
-    if (currentInput !== '' && previousInput !== '' && currentOperator) {
-        await evaluateOperation(false);
+function handleSquareRoot() {
+    let target = currentInput;
+    if (!target && expressionTokens.length > 0 && !isNaN(expressionTokens[expressionTokens.length - 1])) {
+        target = expressionTokens.pop();
     }
+    if (!target || target === '-') return;
 
-    currentOperator = op;
-    if (currentInput !== '') {
-        previousInput = currentInput;
-        currentInput = '';
+    const num = parseFloat(target);
+    if (num < 0) {
+        display.innerText = 'Error: Neg Sqrt';
+        shouldResetInput = true;
+        return;
     }
+    const res = Math.sqrt(num);
+    const sanitized = Number.isInteger(res) ? res.toString() : parseFloat(res.toFixed(8)).toString();
+    currentInput = sanitized;
     shouldResetInput = false;
     updateDisplay();
 }
 
-async function handleCalculateButton() {
-    if (!currentOperator || currentInput === '') return;
-
-    if (historyPanel) {
-        historyPanel.classList.add('hidden');
+function handleOperator(op) {
+    if (shouldResetInput) {
+        shouldResetInput = false;
     }
 
-    await evaluateOperation(true);
+    // Handle negative sign input
+    if (op === '-') {
+        if (currentInput === '') {
+            if (expressionTokens.length === 0 || ['+', '-', '*', '/'].includes(expressionTokens[expressionTokens.length - 1])) {
+                currentInput = '-';
+                updateDisplay();
+                return;
+            }
+        }
+    }
+
+    if (currentInput === '-') return;
+
+    if (currentInput !== '') {
+        expressionTokens.push(currentInput);
+        expressionTokens.push(op);
+        currentInput = '';
+    } else if (expressionTokens.length > 0) {
+        // Swap operator if user enters a different one
+        expressionTokens[expressionTokens.length - 1] = op;
+    }
+    updateDisplay();
 }
 
 function getSymbol(op) {
@@ -343,13 +368,10 @@ function getSymbol(op) {
 }
 
 function updateDisplay() {
-    display.innerText = currentInput || previousInput || '0';
+    const topString = expressionTokens.map(tok => ['+', '-', '*', '/'].includes(tok) ? getSymbol(tok) : tok).join(' ');
+    expressionDisplay.innerText = topString + (topString && currentInput ? ' ' + currentInput : topString ? '' : currentInput);
 
-    if (currentOperator && currentOperator !== 'sqrt') {
-        expressionDisplay.innerText = `${previousInput} ${getSymbol(currentOperator)} ${currentInput}`;
-    } else if (currentOperator === 'sqrt') {
-        expressionDisplay.innerText = `√(${previousInput})`;
-    }
+    display.innerText = currentInput || (expressionTokens.length > 0 ? expressionTokens[expressionTokens.length - 2] || expressionTokens[0] : '0');
 
     requestAnimationFrame(() => {
         display.scrollLeft = display.scrollWidth;
@@ -357,83 +379,80 @@ function updateDisplay() {
     });
 }
 
-function computeLocal(n1, n2, op) {
-    switch (op) {
-        case '+': return n1 + n2;
-        case '-': return n1 - n2;
-        case '*': return n1 * n2;
-        case '/': return n2 !== 0 ? n1 / n2 : 'Error: Div by 0';
-        case 'sqrt': return n1 >= 0 ? Math.sqrt(n1) : 'Error: Neg Sqrt';
-        default: return 0;
+function computeChain(tokens) {
+    if (tokens.length === 0) return 0;
+
+    // First pass: Multiplication and Division
+    let intermediate = [];
+    for (let i = 0; i < tokens.length; i++) {
+        const item = tokens[i];
+        if (item === '*' || item === '/') {
+            const prev = intermediate.pop();
+            const next = parseFloat(tokens[++i]);
+            if (item === '/' && next === 0) return 'Error: Div by 0';
+            intermediate.push(item === '*' ? prev * next : prev / next);
+        } else if (!isNaN(item)) {
+            intermediate.push(parseFloat(item));
+        } else {
+            intermediate.push(item);
+        }
     }
+
+    // Second pass: Addition and Subtraction
+    let result = intermediate[0];
+    for (let i = 1; i < intermediate.length; i += 2) {
+        const op = intermediate[i];
+        const nextVal = intermediate[i + 1];
+        if (op === '+') result += nextVal;
+        if (op === '-') result -= nextVal;
+    }
+
+    return result;
 }
 
-async function evaluateOperation(isFinalCalculation) {
-    if (!currentOperator) return;
+async function handleCalculateButton() {
+    if (expressionTokens.length === 0 && (currentInput === '' || currentInput === '-')) return;
 
-    const n1 = parseFloat(previousInput);
-    const n2 = parseFloat(currentInput !== '' ? currentInput : previousInput);
-    const op = currentOperator;
-    const opSymbol = getSymbol(op);
-
-    const fullExpression = op === 'sqrt' ? `√(${n1})` : `${n1} ${opSymbol} ${n2}`;
-    let result;
-
-    try {
-        const response = await fetch('/api/calculate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ num1: n1, num2: n2, operator: op })
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-            result = data.result;
-        } else {
-            result = computeLocal(n1, n2, op);
-        }
-    } catch {
-        result = computeLocal(n1, n2, op);
+    if (historyPanel) {
+        historyPanel.classList.add('hidden');
     }
 
-    if (typeof result === 'string' && result.startsWith('Error')) {
-        display.innerText = result;
-        currentInput = '';
-        previousInput = '';
-        currentOperator = null;
-        shouldResetInput = true;
+    const fullTokens = [...expressionTokens];
+    if (currentInput !== '' && currentInput !== '-') {
+        fullTokens.push(currentInput);
+    } else if (['+', '-', '*', '/'].includes(fullTokens[fullTokens.length - 1])) {
+        fullTokens.pop();
+    }
+
+    if (fullTokens.length === 0) return;
+
+    const fullFormula = fullTokens.map(tok => ['+', '-', '*', '/'].includes(tok) ? getSymbol(tok) : tok).join(' ');
+    const computedVal = computeChain(fullTokens);
+
+    if (typeof computedVal === 'string' && computedVal.startsWith('Error')) {
+        display.innerText = computedVal;
+        expressionDisplay.innerText = fullFormula;
+        resetAll();
         return;
     }
 
-    const sanitizedResult = Number.isInteger(result) ? result : parseFloat(result.toFixed(8));
+    const sanitizedResult = Number.isInteger(computedVal) ? computedVal : parseFloat(computedVal.toFixed(8));
     const resultStr = sanitizedResult.toString();
 
-    if (isFinalCalculation && op !== 'sqrt') {
-        await playKaraokeLyrics(n1, n2, op, resultStr);
-    }
+    await playKaraokeLyrics(fullFormula, resultStr);
 
     if (resultStr.includes('.')) {
         decimalSound.currentTime = 0;
         decimalSound.play().catch(() => {});
     }
 
-    if (isFinalCalculation) {
-        expressionDisplay.innerText = `${fullExpression} =`;
-        display.innerText = resultStr;
-        addHistoryItem(fullExpression, resultStr);
+    expressionDisplay.innerText = `${fullFormula} =`;
+    display.innerText = resultStr;
+    addHistoryItem(fullFormula, resultStr);
 
-        currentInput = resultStr;
-        previousInput = '';
-        currentOperator = null;
-        shouldResetInput = true;
-    } else {
-        previousInput = resultStr;
-        currentInput = '';
-        display.innerText = resultStr;
-        shouldResetInput = false;
-    }
-
-    updateDisplay();
+    currentInput = resultStr;
+    expressionTokens = [];
+    shouldResetInput = true;
 }
 
 function addHistoryItem(expr, result) {
@@ -459,6 +478,7 @@ historyList.addEventListener('click', (e) => {
     if (!item) return;
 
     currentInput = item.dataset.val;
+    expressionTokens = [];
     historyPanel.classList.add('hidden');
     updateDisplay();
     shouldResetInput = false;
