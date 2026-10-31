@@ -4,15 +4,118 @@ const historyPanel = document.getElementById('history-panel');
 const historyList = document.getElementById('history-list');
 const historyToggle = document.getElementById('history-toggle');
 const clearHistoryBtn = document.getElementById('clear-history');
+const closeHistoryBtn = document.getElementById('close-history');
+const rickrollVid = document.getElementById('rickroll-vid');
 
-// Audio & Video Setup
+// Decimal and general audio setup
 const decimalSound = new Audio('https://www.myinstants.com/media/sounds/fahhh.mp3');
 decimalSound.volume = 1.0;
 let audioUnlocked = false;
 
-const rickrollVid = document.getElementById('rickroll-vid');
+// ---------------------------------------------------
+// Loud Spoken Number Voice Engine (Instant & Overlapping)
+// ---------------------------------------------------
+const platinumWords = {
+    '0': 'Zero',
+    '1': 'One',
+    '2': 'Two',
+    '3': 'Three',
+    '4': 'Four',
+    '5': 'Five',
+    '6': 'Six',
+    '7': 'Seven',
+    '8': 'Eight',
+    '9': 'Nine'
+};
 
-// Click outside or anywhere else to close the video overlay
+function playSpokenNumber(num) {
+    if (!('speechSynthesis' in window)) return;
+
+    const word = platinumWords[num];
+    if (!word) return;
+
+    // Reset speech engine state so rapid clicks speak immediately
+    if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+    }
+
+    const utter = new SpeechSynthesisUtterance(word);
+    utter.rate = 1.7;   // Snappy, energetic pace
+    utter.pitch = 1.25;  // Bright, loud female tone
+    utter.volume = 1.0;
+
+    const voices = window.speechSynthesis.getVoices();
+    const voice = voices.find(v =>
+        v.lang && v.lang.startsWith('en') &&
+        (v.name.includes('Female') || v.name.includes('Zira') || v.name.includes('Samantha') || v.name.includes('Google US English'))
+    );
+    if (voice) utter.voice = voice;
+
+    window.speechSynthesis.speak(utter);
+}
+
+// ---------------------------------------------------
+// Dynamic Filipino Karaoke Score Commentator
+// ---------------------------------------------------
+function getKaraokeRemarks(scoreNum) {
+    if (scoreNum < 50) {
+        return {
+            speech: `${scoreNum} points! Practice more!`,
+            label: "PRACTICE PA MORE!",
+            color: "text-rose-500",
+            sub: "MASAKIT SA TENGA!"
+        };
+    } else if (scoreNum < 80) {
+        return {
+            speech: `${scoreNum} points! Good try!`,
+            label: "PWEDE NA! NOT BAD!",
+            color: "text-amber-400",
+            sub: "TRY AGAIN NEXT TIME!"
+        };
+    } else if (scoreNum < 100) {
+        return {
+            speech: `${scoreNum} points! You're a great singer!`,
+            label: "YOU'RE A GREAT SINGER!",
+            color: "text-sky-400",
+            sub: "GALING KUMANTA!"
+        };
+    } else {
+        return {
+            speech: `${scoreNum} points! Perfect score! You're a superstar!`,
+            label: "PERFECT! YOU'RE A SUPERSTAR!",
+            color: "text-yellow-400",
+            sub: "IDOL! PANG CONCERT ANG BOSES!"
+        };
+    }
+}
+
+function playKaraokeApplauseCheer(scoreStr) {
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+
+    const numericScore = parseFloat(scoreStr) || 0;
+    const remark = getKaraokeRemarks(numericScore);
+
+    const utter = new SpeechSynthesisUtterance(remark.speech);
+    utter.rate = 1.05;
+    utter.pitch = 1.3;
+    utter.volume = 1.0;
+
+    const voices = window.speechSynthesis.getVoices();
+    const voice = voices.find(v =>
+        v.lang && v.lang.startsWith('en') &&
+        (v.name.includes('Female') || v.name.includes('Zira') || v.name.includes('Samantha'))
+    );
+    if (voice) utter.voice = voice;
+
+    window.speechSynthesis.speak(utter);
+}
+
+if ('speechSynthesis' in window) {
+    window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+}
+
+// Close rickroll video on background click
 document.addEventListener('click', (e) => {
     if (!rickrollVid.classList.contains('hidden')) {
         if (e.target !== rickrollVid && !e.target.closest('[data-val="rickroll"]')) {
@@ -29,17 +132,159 @@ let shouldResetInput = false;
 let calculationHistory = [];
 
 // ---------------------------------------------------
-// Main Calculator Logic
+// KARAOKE SONGS - 50
+// ---------------------------------------------------
+const karaokeSongs = [
+    { title: "Miss Flawless", artist: "Grin Department", lyrics: ["Miss Flawless, kay ganda mong dalaga...", "Lahat ng lalaki sa'yo ay napapanganga!"] },
+    { title: "Otso-Otso", artist: "Bayani Agbayani", lyrics: ["Itaas ang kamay, igalaw ang baywang...", "Mag-otso-otso tayo hanggang umaga!"] },
+    { title: "Pamela One", artist: "Vhong Navarro", lyrics: ["Pamela-mela one, Pamela-mela two...", "Pamela-mela three, sumayaw ka ng boogie!"] },
+    { title: "Totoy Bibo", artist: "Vhong Navarro", lyrics: ["Ako si Totoy Bibo, sumasayaw ng todo...", "Bata't matanda napapaindak sa kanta!"] },
+    { title: "The Spaghetti Song", artist: "SexBomb Girls ft. Joey de Leon", lyrics: ["Spaghetti pababa, pababa nang pababa...", "Spaghetti pataas, pataas nang pataas!"] },
+    { title: "Jumbo Hotdog", artist: "Masculados", lyrics: ["Jumbo hotdog, kaya mo ba 'to?...", "Kaya mo ba 'tong ubusin nang buo?"] },
+    { title: "Boom Tarat Tarat", artist: "Willie Revillame", lyrics: ["Boom tarat tarat, boom tarat tarat...", "Tararat tararat, boom boom boom!"] },
+    { title: "Sasakyan Kita", artist: "Gladys and the Boxers with K", lyrics: ["Sasakyan kita kahit saan magpunta...", "Basta ikaw ang driver, libre ang gasolina!"] },
+    { title: "Letter to Angelina", artist: "Giniling Festival", lyrics: ["Angelina, pakinggan mo aking pagsinta...", "Kahit mukhang ketchup ang aking mga luha!"] },
+    { title: "Manok Na Pula", artist: "Vic Desucatan", lyrics: ["Ang manok na pula, naipusta ang pera...", "Uwi sa bahay sermon ang napala!"] },
+    { title: "Neneng B", artist: "Nik Makino", lyrics: ["Gusto ko lang naman makatabi si Neneng B...", "Sumasayaw sa tugtugan buong gabi!"] },
+    { title: "Pauwi Nako", artist: "PDL, Flow G, Bosx1ne, Skusta Clee, Yuri Dope", lyrics: ["Pauwi na 'ko baby, sabik na sa'yo...", "Kahit trapik pa yan, dadating ako!"] },
+    { title: "Amakabogera", artist: "Maymay Entrata", lyrics: ["Di pakakabog, laging standout...", "Kabogera ang datingan, walang kokontra!"] },
+    { title: "Demonyo (Red Ollero Live Theme)", artist: "Tanya Markova", lyrics: ["Wag kang matakot sa demonyong kasama...", "Tawanan mo lang, magiging masaya ka!"] },
+    { title: "Itabi Mo, Ako Na", artist: "Tanya Markova", lyrics: ["Itabi mo ako na, ako nang bahala...", "Wag mo nang pahirapan pa ang sarili mo!"] },
+    { title: "Pabili Po", artist: "Banda Ni Kleggy ft. Chito Miranda", lyrics: ["Pabili po ng pag-ibig at ligaya...", "Magkano ba ang puso mong kay ganda?"] },
+    { title: "Bawal Lumabas (The Classroom Song)", artist: "Kim Chiu", lyrics: ["Bawal lumabas, bawal lumabas...", "Pag nag-comply ka sa batas, may karapatan ka!"] },
+    { title: "Chinito Problems", artist: "Enchong Dee", lyrics: ["Bakit ba chinito laging hinahanap?...", "Dahil sa singkit mong mga mata na kay sarap!"] },
+    { title: "Walang Basagan ng Trip", artist: "Jugs & Teddy", lyrics: ["Walang basagan ng trip, kanya-kanya tayo...", "Basta masaya, walang pakialamanan dito!"] },
+    { title: "Kanta Para Sa Mga T*nga", artist: "Mayonnaise", lyrics: ["Kanta para sa pusong patuloy na umaasa...", "Kahit alam namang wala na talagang pag-asa!"] },
+    { title: "Tito Vibes", artist: "Itchyworms", lyrics: ["Kape sa hapon, sumasakit ang likod...", "Ito na ang buhay ng isang ganap na tito!"] },
+    { title: "Gento", artist: "SB19", lyrics: ["Gento, gento, hindi 'to basta-basta...", "Pinaghirapan bago naging ginto!"] },
+    { title: "Sining", artist: "Dionela ft. Jay R", lyrics: ["Ikaw ang sining na walang kapantay...", "Ganda mong hindi kumukupas sa buhay!"] },
+    { title: "Uhaw (Tayong Lahat)", artist: "Dilaw", lyrics: ["Bakit parang sa 'yo lang ako uhaw?...", "Ikaw lang ang laging hanap-tanaw!"] },
+    { title: "Panalo", artist: "Ez Mil", lyrics: ["Panalo tayo, wag nang magduda pa...", "Lahi nating matatag saan man magpunta!"] },
+    { title: "Kahit Ayaw Mo Na", artist: "This Band", lyrics: ["Kahit ayaw mo na, tatakbo pa rin ako...", "Pipilitin kong bumalik sa tabi mo!"] },
+    { title: "Ikaw Lamang", artist: "Silent Sanctuary", lyrics: ["Ikaw lamang ang tangi kong minamahal...", "Pangako sa'yo pag-ibig ay magtatagal!"] },
+    { title: "Di Ka Sayang", artist: "Ben&Ben", lyrics: ["Di ka sayang, sadyang nagkamali ka lang...", "Bumangon ka't ituloy ang iyong laban!"] },
+    { title: "Pagtingin", artist: "Ben&Ben", lyrics: ["Iibig ba o hindi? Nalilito ang isip...", "Kung aaminin ko ba ang aking pagtingin?"] },
+    { title: "Leaves", artist: "Ben&Ben", lyrics: ["Leaves will soon grow from the bareness of trees...", "And all will be alright in time!"] },
+    { title: "Sa Susunod Na Habang Buhay", artist: "Ben&Ben", lyrics: ["Kahit di naging tayo hanggang dulo...", "Sa susunod na habang buhay na lang!"] },
+    { title: "Araw-Araw", artist: "Ben&Ben", lyrics: ["Mahiwaga ang bawat sandali...", "Pipiliin ka sa araw-araw!"] },
+    { title: "Mundo", artist: "IV of Spades", lyrics: ["Aking sinta, ikaw na ang tahanan at mundo...", "Sa pagbalik, mananatili na sa'yo!"] },
+    { title: "Come Inside Of My Heart", artist: "IV of Spades", lyrics: ["Come inside of my heart...", "If you're looking for answers!"] },
+    { title: "Drown", artist: "IV of Spades", lyrics: ["Help me before I drown in memories...", "Looking for solace in the pouring rain!"] },
+    { title: "Binhi", artist: "Arthur Nery", lyrics: ["Nandito lang ako, naghihintay sa binhi...", "Sana'y mamukadkad ang ating pagtangi!"] },
+    { title: "Isa Lang", artist: "Arthur Nery", lyrics: ["Isa lang ang tanging nais makasama...", "Sa hirap at ginhawa ikaw lang sinta!"] },
+    { title: "Paraluman", artist: "Adie", lyrics: ["Sa bawat ngiti mo paraluman...", "Mundo ko'y agad nagkakakulay!"] },
+    { title: "Mahika", artist: "Adie ft. Janine Berdin", lyrics: ["May kakaibang mahika ang 'yong mata...", "Bumibilis ang tibok ng puso kapag kasama ka!"] },
+    { title: "Tahanan", artist: "Adie", lyrics: ["Sa'yo lang natagpuan ang tunay na tahanan...", "Pahinga sa magulong sanlibutan!"] },
+    { title: "Kathang Isip", artist: "Ben&Ben", lyrics: ["Pasensya ka na sa mga kathang isip kong ito...", "Wala pala talagang tayo sa dulo!"] },
+    { title: "Kung 'Di Rin Lang Ikaw", artist: "December Avenue ft. Moira Dela Torre", lyrics: ["Kung di rin lang ikaw ang kasama sa buhay...", "Wag na lang, pipiliin kong mag-isa!"] },
+    { title: "Malaya", artist: "Moira Dela Torre", lyrics: ["Pasensya na, kung ako ay bibitaw na...", "Malaya ka na, malaya ka na!"] },
+    { title: "Huling Sandali", artist: "December Avenue", lyrics: ["Hindi mapigil ang luha sa pag-alis...", "Ito na ba ang ating huling sandali?"] },
+    { title: "Buwan", artist: "Juan Karlos", lyrics: ["Sa ilalim ng puting ilaw, sa dilaw na buwan...", "Pakinggan mo ang aking sigaw!"] },
+    { title: "Dungaw", artist: "Adie", lyrics: ["Dumungaw ka sa bintana ng iyong puso...", "Nandito lang ako, naghihintay sa'yo!"] },
+    { title: "Pagsamo", artist: "Arthur Nery", lyrics: ["Kahit di mo pansin ang aking pagsamo...", "Hihintayin pa rin ang muling pagtingin mo!"] },
+    { title: "Sana", artist: "I Belong to the Zoo", lyrics: ["Sana sinabi mo para di na umasa...", "Sana sinabi mo nang di nasaktan!"] },
+    { title: "Balang Araw", artist: "I Belong to the Zoo", lyrics: ["Balang araw makakahanap ka rin...", "Ng taong tunay na magmamahal sa'yo!"] },
+    { title: "Paubaya", artist: "Moira Dela Torre", lyrics: ["Pinapalaya na kita sa sakit at luha...", "Ipaubaya na lang natin sa tadhana!"] }
+];
+
+// ---------------------------------------------------
+// Karaoke Lyrics & Result-Linked Score Engine
+// ---------------------------------------------------
+async function playKaraokeLyrics(n1, n2, op, resultScoreStr) {
+    const vis = document.getElementById('visualizer');
+    const song = karaokeSongs[Math.floor(Math.random() * karaokeSongs.length)];
+
+    vis.innerHTML = `
+        <div class="relative w-full h-full flex flex-col justify-between items-center p-6 bg-black/95 select-none font-sans text-center">
+            <div class="w-full flex justify-between items-center text-xs sm:text-sm font-mono tracking-widest text-emerald-400 border-b border-zinc-800 pb-3">
+                <span class="animate-pulse flex items-center gap-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                    ▶ KARAOKE CHORUS TIME
+                </span>
+                <span class="bg-zinc-800 px-3 py-1 rounded text-zinc-300 font-bold">SONG NO: ${Math.floor(10000 + Math.random() * 90000)}</span>
+            </div>
+
+            <div class="flex flex-col items-center justify-center my-auto px-4 max-w-2xl w-full">
+                <p class="text-xs sm:text-sm font-bold tracking-widest text-yellow-400 uppercase mb-2">♪ ${song.artist} ♪</p>
+                <h1 class="text-2xl sm:text-4xl font-black text-white tracking-wider mb-6 drop-shadow-[0_2px_10px_rgba(255,255,255,0.4)]">
+                    "${song.title}"
+                </h1>
+
+                <div class="bg-zinc-900/90 border-2 border-sky-500/50 rounded-2xl p-6 shadow-2xl w-full">
+                    <p id="karaoke-line-1" class="text-lg sm:text-2xl font-bold text-sky-400 transition-all duration-700">
+                        ${song.lyrics[0]}
+                    </p>
+                    <p id="karaoke-line-2" class="text-lg sm:text-2xl font-bold text-zinc-500 mt-4 transition-all duration-700">
+                        ${song.lyrics[1]}
+                    </p>
+                </div>
+
+                <div class="w-full bg-zinc-800 h-2.5 rounded-full mt-6 overflow-hidden border border-zinc-700">
+                    <div id="singing-progress" class="bg-gradient-to-r from-sky-400 to-emerald-400 h-full w-0 transition-all ease-linear" style="transition-duration: 6000ms;"></div>
+                </div>
+                <p class="text-[11px] text-zinc-400 font-mono tracking-wider mt-2 animate-pulse">🎤 SING THE CHORUS OUT LOUD...</p>
+            </div>
+
+            <div class="text-xs font-mono text-zinc-500 tracking-wider">
+                CASIO ClassWiz fx-991CW • COMPUTING: ${n1} ${getSymbol(op)} ${n2}
+            </div>
+        </div>
+    `;
+
+    vis.classList.remove('hidden');
+
+    setTimeout(() => {
+        const bar = document.getElementById('singing-progress');
+        if (bar) bar.style.width = '100%';
+    }, 50);
+
+    // Chorus First Line (3s)
+    await new Promise(r => setTimeout(r, 3000));
+
+    // Shift to Chorus Second Line (3s)
+    const l1 = document.getElementById('karaoke-line-1');
+    const l2 = document.getElementById('karaoke-line-2');
+    if (l1 && l2) {
+        l1.className = 'text-lg sm:text-2xl font-bold text-zinc-500 transition-all duration-700';
+        l2.className = 'text-lg sm:text-2xl font-bold text-yellow-300 scale-105 transition-all duration-700 drop-shadow-[0_0_12px_rgba(253,224,71,0.5)]';
+    }
+
+    await new Promise(r => setTimeout(r, 3000));
+
+    const numericScore = parseFloat(resultScoreStr) || 0;
+    const remark = getKaraokeRemarks(numericScore);
+
+    playKaraokeApplauseCheer(resultScoreStr);
+
+    vis.innerHTML = `
+        <div class="flex flex-col items-center justify-center p-8 bg-black/95 w-full h-full text-center">
+            <p class="text-sm sm:text-base font-mono tracking-widest text-zinc-400 mb-2">YOUR KARAOKE SCORE IS:</p>
+            <h2 class="text-6xl sm:text-8xl font-black ${remark.color} animate-bounce tracking-widest drop-shadow-[0_0_25px_rgba(255,255,255,0.4)]">
+                ${resultScoreStr}!
+            </h2>
+            <p class="text-2xl sm:text-3xl font-bold text-white mt-4 tracking-wide font-mono">
+                "${remark.label}"
+            </p>
+            <p class="text-sm font-mono tracking-widest mt-2 ${remark.color} animate-pulse">
+                ${remark.sub}
+            </p>
+        </div>
+    `;
+
+    await new Promise(r => setTimeout(r, 2000));
+    vis.classList.add('hidden');
+}
+
+// ---------------------------------------------------
+// Button Listeners & Calculator Logic
 // ---------------------------------------------------
 document.querySelectorAll('.btn').forEach(button => {
     button.addEventListener('click', async () => {
-
-        // Unlock browser audio security on first click
         if (!audioUnlocked) {
             decimalSound.play().then(() => {
                 decimalSound.pause();
                 decimalSound.currentTime = 0;
-            }).catch(e => console.log("Audio unlock pending"));
+            }).catch(() => {});
             audioUnlocked = true;
         }
 
@@ -47,68 +292,102 @@ document.querySelectorAll('.btn').forEach(button => {
         const value = button.dataset.val;
 
         if (!action) {
-            if (shouldResetInput) {
-                currentInput = '';
-                shouldResetInput = false;
-            }
-            if (value === '.' && currentInput.includes('.')) return;
-            currentInput += value;
-            updateDisplay();
-
+            handleNumber(value);
         } else if (action === 'clear') {
-            currentInput = '';
-            previousInput = '';
-            currentOperator = null;
-            expressionDisplay.innerText = '';
-            updateDisplay();
-
+            resetAll();
         } else if (action === 'delete') {
-            currentInput = currentInput.toString().slice(0, -1);
-            updateDisplay();
-
+            handleDelete();
         } else if (action === 'easter-egg') {
-            if (value === 'rickroll') {
-                // Plays your local Voicy_rickroll.mp4 video over the calculator
-                rickrollVid.classList.remove('hidden');
-                rickrollVid.currentTime = 0;
-                rickrollVid.play().catch(e => console.log("Video blocked:", e));
-            }
-            if (value === 'orgchem') {
-                window.open('https://youtu.be/ZtTO8uUGy2Y?si=3VY-ssfDV-N1ztUS', '_blank');
-            }
+            handleEasterEgg(value);
         } else if (action === 'sqrt') {
-            if (currentInput === '' && previousInput === '') return;
-            currentOperator = 'sqrt';
-            previousInput = '0';
-            await calculate();
-
+            handleSquareRoot();
         } else if (action === 'operator') {
-            if (currentInput === '' && previousInput === '') return;
-            if (currentInput !== '' && previousInput !== '') {
-                await calculate();
-            }
-            currentOperator = value;
-            if (currentInput !== '') {
-                previousInput = currentInput;
-                currentInput = '';
-            }
-            shouldResetInput = false;
-            updateDisplay();
-
+            await handleOperator(value);
         } else if (action === 'calculate') {
-            await calculate();
-            shouldResetInput = true;
+            await handleCalculateButton();
         }
     });
 });
 
-function updateDisplay() {
-    display.innerText = currentInput || '0';
-    if (currentOperator && currentOperator !== 'sqrt') {
-        expressionDisplay.innerText = `${previousInput} ${getSymbol(currentOperator)} ${currentInput}`;
-    } else if (currentOperator === 'sqrt') {
-        expressionDisplay.innerText = `√(${currentInput})`;
+function handleNumber(val) {
+    if (val !== '.') {
+        playSpokenNumber(val);
     }
+
+    if (shouldResetInput) {
+        currentInput = val === '.' ? '0.' : '';
+        shouldResetInput = false;
+    }
+
+    if (val === '.') {
+        if (currentInput === '') currentInput = '0.';
+        else if (currentInput.includes('.')) return;
+        else currentInput += '.';
+    } else {
+        if (currentInput === '0') currentInput = val;
+        else currentInput += val;
+    }
+    updateDisplay();
+}
+
+function handleDelete() {
+    currentInput = currentInput.toString().slice(0, -1);
+    updateDisplay();
+}
+
+function resetAll() {
+    currentInput = '';
+    previousInput = '';
+    currentOperator = null;
+    shouldResetInput = false;
+    expressionDisplay.innerText = '';
+    display.innerText = '0';
+}
+
+function handleEasterEgg(val) {
+    if (val === 'rickroll') {
+        rickrollVid.classList.remove('hidden');
+        rickrollVid.currentTime = 0;
+        rickrollVid.play().catch(e => console.log('Video blocked:', e));
+    } else if (val === 'orgchem') {
+        window.open('https://youtu.be/ZtTO8uUGy2Y?si=3VY-ssfDV-N1ztUS', '_blank');
+    }
+}
+
+async function handleSquareRoot() {
+    const target = currentInput || previousInput;
+    if (!target) return;
+
+    currentOperator = 'sqrt';
+    previousInput = target;
+    currentInput = target;
+    await evaluateOperation(true);
+}
+
+async function handleOperator(op) {
+    if (currentInput === '' && previousInput === '') return;
+
+    if (currentInput !== '' && previousInput !== '' && currentOperator) {
+        await evaluateOperation(false);
+    }
+
+    currentOperator = op;
+    if (currentInput !== '') {
+        previousInput = currentInput;
+        currentInput = '';
+    }
+    shouldResetInput = false;
+    updateDisplay();
+}
+
+async function handleCalculateButton() {
+    if (!currentOperator || currentInput === '') return;
+
+    if (historyPanel) {
+        historyPanel.classList.add('hidden');
+    }
+
+    await evaluateOperation(true);
 }
 
 function getSymbol(op) {
@@ -117,17 +396,42 @@ function getSymbol(op) {
     return op;
 }
 
-async function calculate() {
-    if ((currentInput === '' && currentOperator !== 'sqrt') || previousInput === '' || !currentOperator) return;
+function updateDisplay() {
+    display.innerText = currentInput || previousInput || '0';
 
-    const opSymbol = getSymbol(currentOperator);
-    const fullExpression = currentOperator === 'sqrt'
-        ? `√(${currentInput})`
-        : `${previousInput} ${opSymbol} ${currentInput}`;
+    if (currentOperator && currentOperator !== 'sqrt') {
+        expressionDisplay.innerText = `${previousInput} ${getSymbol(currentOperator)} ${currentInput}`;
+    } else if (currentOperator === 'sqrt') {
+        expressionDisplay.innerText = `√(${previousInput})`;
+    }
+
+    requestAnimationFrame(() => {
+        display.scrollLeft = display.scrollWidth;
+        expressionDisplay.scrollLeft = expressionDisplay.scrollWidth;
+    });
+}
+
+function computeLocal(n1, n2, op) {
+    switch (op) {
+        case '+': return n1 + n2;
+        case '-': return n1 - n2;
+        case '*': return n1 * n2;
+        case '/': return n2 !== 0 ? n1 / n2 : 'Error: Div by 0';
+        case 'sqrt': return n1 >= 0 ? Math.sqrt(n1) : 'Error: Neg Sqrt';
+        default: return 0;
+    }
+}
+
+async function evaluateOperation(isFinalCalculation) {
+    if (!currentOperator) return;
 
     const n1 = parseFloat(previousInput);
-    const n2 = parseFloat(currentInput);
+    const n2 = parseFloat(currentInput !== '' ? currentInput : previousInput);
     const op = currentOperator;
+    const opSymbol = getSymbol(op);
+
+    const fullExpression = op === 'sqrt' ? `√(${n1})` : `${n1} ${opSymbol} ${n2}`;
+    let result;
 
     try {
         const response = await fetch('/api/calculate', {
@@ -136,119 +440,54 @@ async function calculate() {
             body: JSON.stringify({ num1: n1, num2: n2, operator: op })
         });
 
-        const data = await response.json();
-
         if (response.ok) {
-            const resultStr = data.result.toString();
-
-            if (resultStr.includes('.')) {
-                decimalSound.currentTime = 0;
-                decimalSound.play().catch(e => console.log("Audio blocked:", e));
-            }
-
-            if (op !== 'sqrt') {
-                playVisualization(n1, n2, op, data.result);
-            }
-
-            expressionDisplay.innerText = `${fullExpression} =`;
-            currentInput = resultStr;
-            updateDisplay();
-            addHistoryItem(fullExpression, resultStr);
-
-            currentOperator = null;
-            previousInput = '';
+            const data = await response.json();
+            result = data.result;
         } else {
-            display.innerText = data.error;
-            currentInput = '';
+            result = computeLocal(n1, n2, op);
         }
-    } catch (error) {
-        display.innerText = 'Error';
-    }
-}
-
-// ---------------------------------------------------
-// Visualization Engine
-// ---------------------------------------------------
-async function playVisualization(n1, n2, op, result) {
-    if (!Number.isInteger(n1) || !Number.isInteger(n2) || n1 < 0 || n2 < 0 || n1 > 50 || n2 > 50) return;
-
-    const vis = document.getElementById('visualizer');
-    const container = document.getElementById('vis-blocks');
-    const text = document.getElementById('vis-text');
-
-    vis.classList.remove('hidden');
-    container.innerHTML = '';
-    text.innerText = `${n1} ${getSymbol(op)} ${n2} = ${result}`;
-
-    for(let i=0; i<n1; i++) {
-        let b = document.createElement('div');
-        b.className = 'w-10 h-10 bg-sky-500 rounded-md m-1 shadow-lg block-item';
-        container.appendChild(b);
+    } catch {
+        result = computeLocal(n1, n2, op);
     }
 
-    await new Promise(r => setTimeout(r, 800));
-
-    if (op === '+') {
-        for(let i=0; i<n2; i++) {
-            let b = document.createElement('div');
-            b.className = 'w-10 h-10 bg-emerald-500 rounded-md m-1 scale-0 block-item shadow-lg';
-            container.appendChild(b);
-            setTimeout(() => b.classList.remove('scale-0'), 100 + (i * 50));
-        }
-    }
-    else if (op === '-') {
-        const blocks = document.querySelectorAll('.block-item');
-        for(let i=0; i<n2 && i<blocks.length; i++) {
-            let b = blocks[blocks.length - 1 - i];
-            setTimeout(() => b.classList.replace('bg-sky-500', 'bg-rose-500'), i * 150);
-            setTimeout(() => { b.style.transform = 'scale(0)'; b.style.opacity = '0'; }, 1000 + (i * 150));
-        }
-    }
-    else if (op === '*') {
-        container.innerHTML = '';
-        for(let i=0; i<n1; i++) {
-            let group = document.createElement('div');
-            group.className = 'p-3 m-2 border-2 border-dashed border-sky-400 rounded-lg flex flex-wrap gap-2 opacity-0 block-item';
-            for(let j=0; j<n2; j++) {
-                let b = document.createElement('div');
-                b.className = 'w-8 h-8 bg-purple-500 rounded shadow';
-                group.appendChild(b);
-            }
-            container.appendChild(group);
-            setTimeout(() => group.classList.remove('opacity-0'), i * 400);
-        }
-    }
-    else if (op === '/') {
-        if (n2 === 0) return;
-        container.innerHTML = '';
-        let groupCount = Math.floor(n1 / n2);
-
-        for(let i=0; i<groupCount; i++) {
-            let group = document.createElement('div');
-            group.className = 'p-3 m-2 border-2 border-emerald-400 rounded-lg flex flex-wrap gap-2 scale-0 block-item';
-            for(let j=0; j<n2; j++) {
-                let b = document.createElement('div');
-                b.className = 'w-8 h-8 bg-sky-500 rounded shadow';
-                group.appendChild(b);
-            }
-            container.appendChild(group);
-            setTimeout(() => group.classList.remove('scale-0'), i * 400);
-        }
-
-        if (n1 % n2 !== 0) {
-            let remGroup = document.createElement('div');
-            remGroup.className = 'p-3 m-2 border-2 border-rose-400 border-dashed rounded-lg flex flex-wrap gap-2 scale-0 block-item';
-            for(let i=0; i<(n1%n2); i++) {
-                let b = document.createElement('div');
-                b.className = 'w-8 h-8 bg-slate-500 rounded shadow';
-                remGroup.appendChild(b);
-            }
-            container.appendChild(remGroup);
-            setTimeout(() => remGroup.classList.remove('scale-0'), groupCount * 400);
-        }
+    if (typeof result === 'string' && result.startsWith('Error')) {
+        display.innerText = result;
+        currentInput = '';
+        previousInput = '';
+        currentOperator = null;
+        shouldResetInput = true;
+        return;
     }
 
-    setTimeout(() => { vis.classList.add('hidden'); }, 4500);
+    const sanitizedResult = Number.isInteger(result) ? result : parseFloat(result.toFixed(8));
+    const resultStr = sanitizedResult.toString();
+
+    if (isFinalCalculation && op !== 'sqrt') {
+        await playKaraokeLyrics(n1, n2, op, resultStr);
+    }
+
+    if (resultStr.includes('.')) {
+        decimalSound.currentTime = 0;
+        decimalSound.play().catch(() => {});
+    }
+
+    if (isFinalCalculation) {
+        expressionDisplay.innerText = `${fullExpression} =`;
+        display.innerText = resultStr;
+        addHistoryItem(fullExpression, resultStr);
+
+        currentInput = resultStr;
+        previousInput = '';
+        currentOperator = null;
+        shouldResetInput = true;
+    } else {
+        previousInput = resultStr;
+        currentInput = '';
+        display.innerText = resultStr;
+        shouldResetInput = false;
+    }
+
+    updateDisplay();
 }
 
 // ---------------------------------------------------
@@ -265,7 +504,7 @@ function renderHistory() {
         return;
     }
     historyList.innerHTML = calculationHistory.map(item => `
-        <li class="history-item p-2 flex justify-between items-center hover:bg-zinc-700/80 rounded cursor-pointer transition-colors" data-val="${item.result}">
+        <li class="history-item p-2 flex justify-between items-center hover:bg-zinc-800 rounded-lg cursor-pointer transition-colors" data-val="${item.result}">
             <span class="text-zinc-400 pointer-events-none">${item.expr} =</span>
             <span class="text-emerald-400 font-bold pointer-events-none">${item.result}</span>
         </li>
@@ -283,6 +522,9 @@ historyList.addEventListener('click', (e) => {
 });
 
 historyToggle.addEventListener('click', () => historyPanel.classList.toggle('hidden'));
+if (closeHistoryBtn) {
+    closeHistoryBtn.addEventListener('click', () => historyPanel.classList.add('hidden'));
+}
 clearHistoryBtn.addEventListener('click', () => {
     calculationHistory = [];
     renderHistory();
