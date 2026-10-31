@@ -491,7 +491,7 @@ async function evaluateOperation(isFinalCalculation) {
 }
 
 // ---------------------------------------------------
-// History Drawer Logic
+// History Drawer Logic1
 // ---------------------------------------------------
 function addHistoryItem(expr, result) {
     calculationHistory.unshift({ expr, result });
