@@ -83,8 +83,7 @@ document.addEventListener('click', (e) => {
 });
 
 let currentInput = '';
-let previousInput = '';
-let currentOperator = null;
+let expressionChain = '';
 let shouldResetInput = false;
 let calculationHistory = [];
 
@@ -141,7 +140,7 @@ const karaokeSongs = [
     { title: "Paubaya", artist: "Moira Dela Torre", lyrics: ["Pinapalaya na kita sa sakit at luha...", "Ipaubaya na lang natin sa tadhana!"] }
 ];
 
-async function playKaraokeLyrics(n1, n2, op, resultScoreStr) {
+async function playKaraokeLyrics(exprStr, resultScoreStr) {
     const vis = document.getElementById('visualizer');
     const song = karaokeSongs[Math.floor(Math.random() * karaokeSongs.length)];
 
@@ -177,7 +176,7 @@ async function playKaraokeLyrics(n1, n2, op, resultScoreStr) {
             </div>
 
             <div class="text-xs font-mono text-zinc-500 tracking-wider">
-                CASIONG ClassWiz fx-991CW • COMPUTING: ${n1} ${getSymbol(op)} ${n2}
+                CASIONG ClassWiz fx-991CW • COMPUTING: ${exprStr}
             </div>
         </div>
     `;
@@ -248,7 +247,7 @@ document.querySelectorAll('.btn').forEach(button => {
         } else if (action === 'sqrt') {
             handleSquareRoot();
         } else if (action === 'operator') {
-            await handleOperator(value);
+            handleOperator(value);
         } else if (action === 'calculate') {
             await handleCalculateButton();
         }
@@ -262,6 +261,7 @@ function handleNumber(val) {
 
     if (shouldResetInput) {
         currentInput = val === '.' ? '0.' : '';
+        expressionChain = '';
         shouldResetInput = false;
     }
 
@@ -283,8 +283,7 @@ function handleDelete() {
 
 function resetAll() {
     currentInput = '';
-    previousInput = '';
-    currentOperator = null;
+    expressionChain = '';
     shouldResetInput = false;
     expressionDisplay.innerText = '';
     display.innerText = '0';
@@ -300,40 +299,127 @@ function handleEasterEgg(val) {
     }
 }
 
-async function handleSquareRoot() {
-    const target = currentInput || previousInput;
-    if (!target) return;
-
-    currentOperator = 'sqrt';
-    previousInput = target;
-    currentInput = target;
-    await evaluateOperation(true);
-}
-
-async function handleOperator(op) {
-    if (currentInput === '' && previousInput === '') return;
-
-    if (currentInput !== '' && previousInput !== '' && currentOperator) {
-        await evaluateOperation(false);
-    }
-
-    currentOperator = op;
+function handleSquareRoot() {
+    // If there's already a number typed (e.g. typing 9 then √), treat it as implied multiplication: 9 × √
     if (currentInput !== '') {
-        previousInput = currentInput;
+        expressionChain += currentInput + ' × ';
+        updateDisplay(currentInput);
         currentInput = '';
     }
+
+    // Add the square root symbol to the string and wait for the user to type the inner number
+    expressionChain += '√';
     shouldResetInput = false;
-    updateDisplay();
+    expressionDisplay.innerText = expressionChain + currentInput;
+}
+
+function handleOperator(op) {
+    if (currentInput !== '') {
+        expressionChain += currentInput;
+        updateDisplay(currentInput);
+        currentInput = '';
+    } else if (expressionChain === '') {
+        expressionChain = '0';
+    }
+
+    const symbol = getSymbol(op);
+
+    if (expressionChain.match(/[+×÷-]\s*$/)) {
+        expressionChain = expressionChain.replace(/[+×÷-]\s*$/, `${symbol} `);
+    } else {
+        expressionChain += ` ${symbol} `;
+    }
+
+    shouldResetInput = false;
+    expressionDisplay.innerText = expressionChain;
 }
 
 async function handleCalculateButton() {
-    if (!currentOperator || currentInput === '') return;
+    const isSingleNumber = expressionChain === '' || expressionChain === '√';
+
+    if (currentInput !== '') {
+        expressionChain += currentInput;
+    }
+
+    expressionChain = expressionChain.replace(/\s*[+×÷-]\s*$/, '');
+    if (!expressionChain) return;
 
     if (historyPanel) {
         historyPanel.classList.add('hidden');
     }
 
-    await evaluateOperation(true);
+    let result;
+
+    if (isSingleNumber && !expressionChain.includes('√')) {
+        result = parseFloat(expressionChain);
+    } else {
+        try {
+            const response = await fetch('http://localhost:8080/api/calculate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ expression: expressionChain })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data && data.result !== undefined && data.result !== null) {
+                    result = data.result;
+                } else {
+                    throw new Error("Java backend returned invalid data format");
+                }
+            } else {
+                throw new Error("Backend connection failed");
+            }
+        } catch (error) {
+            console.warn("Spring Boot unreachable or failed. Safely calculating via JavaScript fallback.");
+            try {
+                let cleanExpression = expressionChain
+                    .replace(/×/g, '*')
+                    .replace(/÷/g, '/');
+
+                // Safe JS Math Root Fallback
+                cleanExpression = cleanExpression.replace(/√\s*(\d+(?:\.\d+)?)/g, 'Math.sqrt($1)');
+                result = Function(`'use strict'; return (${cleanExpression})`)();
+            } catch (fallbackError) {
+                result = 'Error';
+            }
+        }
+    }
+
+    if (
+        result === Infinity ||
+        result === -Infinity ||
+        Number.isNaN(Number(result)) ||
+        result === undefined ||
+        result === null ||
+        (typeof result === 'string' && result.includes('Error'))
+    ) {
+        display.innerText = 'Math Error';
+        resetAll();
+        return;
+    }
+
+    const sanitizedResult = Number.isInteger(Number(result)) ? Number(result) : parseFloat(Number(result).toFixed(8));
+    const resultStr = sanitizedResult.toString();
+
+    // 1. UPDATE THE UI INSTANTLY
+    if (resultStr.includes('.')) {
+        decimalSound.currentTime = 0;
+        decimalSound.play().catch(() => {});
+    }
+
+    expressionDisplay.innerText = `${expressionChain} =`;
+    display.innerText = resultStr;
+    addHistoryItem(expressionChain, resultStr);
+
+    currentInput = resultStr;
+    expressionChain = '';
+    shouldResetInput = true;
+
+    // 2. TRIGGER KARAOKE *ONLY* IF IT WAS A REAL CALCULATION
+    if (!isSingleNumber) {
+        playKaraokeLyrics(expressionDisplay.innerText, resultStr);
+    }
 }
 
 function getSymbol(op) {
@@ -342,98 +428,21 @@ function getSymbol(op) {
     return op;
 }
 
-function updateDisplay() {
-    display.innerText = currentInput || previousInput || '0';
-
-    if (currentOperator && currentOperator !== 'sqrt') {
-        expressionDisplay.innerText = `${previousInput} ${getSymbol(currentOperator)} ${currentInput}`;
-    } else if (currentOperator === 'sqrt') {
-        expressionDisplay.innerText = `√(${previousInput})`;
+function updateDisplay(overrideDisplay = null) {
+    if (overrideDisplay !== null) {
+        display.innerText = overrideDisplay;
+    } else if (currentInput !== '') {
+        display.innerText = currentInput;
+    } else if (expressionChain === '') {
+        display.innerText = '0';
     }
+
+    expressionDisplay.innerText = expressionChain + currentInput;
 
     requestAnimationFrame(() => {
         display.scrollLeft = display.scrollWidth;
         expressionDisplay.scrollLeft = expressionDisplay.scrollWidth;
     });
-}
-
-function computeLocal(n1, n2, op) {
-    switch (op) {
-        case '+': return n1 + n2;
-        case '-': return n1 - n2;
-        case '*': return n1 * n2;
-        case '/': return n2 !== 0 ? n1 / n2 : 'Error: Div by 0';
-        case 'sqrt': return n1 >= 0 ? Math.sqrt(n1) : 'Error: Neg Sqrt';
-        default: return 0;
-    }
-}
-
-async function evaluateOperation(isFinalCalculation) {
-    if (!currentOperator) return;
-
-    const n1 = parseFloat(previousInput);
-    const n2 = parseFloat(currentInput !== '' ? currentInput : previousInput);
-    const op = currentOperator;
-    const opSymbol = getSymbol(op);
-
-    const fullExpression = op === 'sqrt' ? `√(${n1})` : `${n1} ${opSymbol} ${n2}`;
-    let result;
-
-    try {
-        const response = await fetch('/api/calculate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ num1: n1, num2: n2, operator: op })
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-            result = data.result;
-        } else {
-            result = computeLocal(n1, n2, op);
-        }
-    } catch {
-        result = computeLocal(n1, n2, op);
-    }
-
-    if (typeof result === 'string' && result.startsWith('Error')) {
-        display.innerText = result;
-        currentInput = '';
-        previousInput = '';
-        currentOperator = null;
-        shouldResetInput = true;
-        return;
-    }
-
-    const sanitizedResult = Number.isInteger(result) ? result : parseFloat(result.toFixed(8));
-    const resultStr = sanitizedResult.toString();
-
-    if (isFinalCalculation && op !== 'sqrt') {
-        await playKaraokeLyrics(n1, n2, op, resultStr);
-    }
-
-    if (resultStr.includes('.')) {
-        decimalSound.currentTime = 0;
-        decimalSound.play().catch(() => {});
-    }
-
-    if (isFinalCalculation) {
-        expressionDisplay.innerText = `${fullExpression} =`;
-        display.innerText = resultStr;
-        addHistoryItem(fullExpression, resultStr);
-
-        currentInput = resultStr;
-        previousInput = '';
-        currentOperator = null;
-        shouldResetInput = true;
-    } else {
-        previousInput = resultStr;
-        currentInput = '';
-        display.innerText = resultStr;
-        shouldResetInput = false;
-    }
-
-    updateDisplay();
 }
 
 function addHistoryItem(expr, result) {
