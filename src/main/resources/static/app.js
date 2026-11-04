@@ -482,4 +482,5 @@ clearHistoryBtn.addEventListener('click', () => {
     renderHistory();
 });
 
+
 renderHistory();
