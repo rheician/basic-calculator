@@ -14,7 +14,7 @@ public class CalculatorController {
                     .replace(" ", "");
             double result = evaluateString(expr);
             if (Double.isInfinite(result) || Double.isNaN(result)) {
-                throw new ArithmeticException("Math Error");
+                return ResponseEntity.badRequest().body(new CalculationResponse(0, "Error"));
             }
             return ResponseEntity.ok(new CalculationResponse(result, null));
         } catch (Exception e) {

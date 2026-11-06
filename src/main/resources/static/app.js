@@ -310,6 +310,7 @@ async function handleCalculateButton() {
         historyPanel.classList.add('hidden');
     }
     let result;
+    let backendFailed = false;
     if (isSingleNumber && !expressionChain.includes('√')) {
         result = parseFloat(expressionChain);
     } else {
@@ -319,18 +320,20 @@ async function handleCalculateButton() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ expression: expressionChain })
             });
-
             if (response.ok) {
                 const data = await response.json();
                 if (data && data.result !== undefined && data.result !== null) {
                     result = data.result;
                 } else {
-                    throw new Error("Java backend returned invalid data format");
+                    backendFailed = true;
                 }
             } else {
-                throw new Error("Backend connection failed");
+                backendFailed = true;
             }
         } catch (error) {
+            backendFailed = true;
+        }
+        if (backendFailed) {
             console.warn("Spring Boot unreachable or failed. Safely calculating via JavaScript fallback.");
             try {
                 let cleanExpression = expressionChain
@@ -343,7 +346,6 @@ async function handleCalculateButton() {
             }
         }
     }
-    // math errors
     if (
         result === Infinity ||
         result === -Infinity ||
@@ -372,7 +374,7 @@ async function handleCalculateButton() {
     expressionChain = '';
     shouldResetInput = true;
     if (!isSingleNumber) {
-        playKaraokeLyrics(expressionDisplay.innerText, resultStr);
+        await playKaraokeLyrics(expressionDisplay.innerText, resultStr);
     }
 }
 // switch operators
