@@ -352,8 +352,11 @@ async function handleCalculateButton() {
         result === null ||
         (typeof result === 'string' && result.includes('Error'))
     ) {
+        currentInput = '';
+        expressionChain = '';
+        shouldResetInput = true;
+        expressionDisplay.innerText = '';
         display.innerText = 'Math Error';
-        resetAll();
         return;
     }
     const sanitizedResult = Number.isInteger(Number(result)) ? Number(result) : parseFloat(Number(result).toFixed(8));
